@@ -1,0 +1,32 @@
+trigger:
+  branches:
+    include:
+    - master
+stages:
+- stage: __default
+  jobs:
+  - job: Job
+    pool:
+      name: azurecloudubuntu
+    steps:
+    - task: Docker@2
+      name: 'NexusRepoLogin'
+      inputs:
+        containerRegistry: 'nexusrepo'
+        command: 'login'
+    - task: Bash@3
+      name: 'DockerBuild'
+      inputs:
+        targetType: 'inline'
+        script: 'docker build -t $(Build.Repository.Name):$(Build.BuildId) .'
+    - task: Bash@3
+      name: 'DockerTag'
+      inputs:
+        targetType: 'inline'
+        script: 'docker tag $(Build.Repository.Name):$(Build.BuildId) nexusrepo.eastus.cloudapp.azure.com:8083/$(Build.Repository.Name):$(Build.BuildId)'
+    - task: Bash@3
+      name: 'NexusPush'
+      inputs:
+        targetType: 'inline'
+        script: 'docker push nexusrepo.eastus.cloudapp.azure.com:8083/$(Build.Repository.Name):$(Build.BuildId)'
+
